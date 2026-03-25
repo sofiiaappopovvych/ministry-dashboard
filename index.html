@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ministry Team Dashboard</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2430;
+      --muted: #697386;
+      --border: #e6e8ef;
+      --lead: #ef4444;
+      --tech: #3b82f6;
+      --program: #f59e0b;
+      --support: #10b981;
+      --other: #8b5cf6;
+      --shadow: 0 10px 30px rgba(20, 27, 45, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 750px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card,
+    .panel,
+    .member-card,
+    .schedule-card,
+    .tooltip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card {
+      padding: 18px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 18px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .panel h2,
+    .content h2 {
+      margin: 0 0 14px;
+      font-size: 20px;
+    }
+
+    .filter-group {
+      margin-bottom: 18px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 14px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .chip.active {
+      color: #fff;
+      background: var(--text);
+      border-color: var(--text);
+    }
+
+    .btn-reset {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px;
+      background: var(--text);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .content-section {
+      margin-bottom: 24px;
+    }
+
+    .members-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .member-card {
+      padding: 16px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .member-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .member-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .member-name {
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .member-team {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .role-badge {
+      padding: 6px 10px;
+      border-radius: 999px;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .lead { background: var(--lead); }
+    .tech { background: var(--tech); }
+    .program { background: var(--program); }
+    .support { background: var(--support); }
+    .other { background: var(--other); }
+
+    .member-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .member-row .label {
+      color: var(--muted);
+      min-width: 76px;
+    }
+
+    .skills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .skill-tag {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: #f2f4f8;
+      border: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .schedule-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .schedule-card {
+      padding: 16px;
+    }
+
+    .schedule-card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .schedule-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .schedule-room {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+
+    .schedule-room h4 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+
+    .schedule-list {
+      display: grid;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    .schedule-list span {
+      color: var(--muted);
+    }
+
+    .tooltip {
+      position: fixed;
+      z-index: 1000;
+      width: 290px;
+      padding: 14px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tooltip h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .tooltip .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .tooltip .line {
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .tooltip .line strong {
+      color: var(--text);
+    }
+
+    .empty {
+      padding: 24px;
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 1120px) {
+      .layout { grid-template-columns: 1fr; }
+      .panel { position: static; }
+      .stats { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+      .schedule-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 16px; }
+      .hero h1 { font-size: 26px; }
+      .stats { grid-template-columns: 1fr; }
+      .members-grid { grid-template-columns: 1fr; }
+      .tooltip { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div>
+        <h1>Ministry Team Dashboard</h1>
+        <p>Внутренний дашборд команды: люди, роли, умения, замены и примерное расписание на 3 воскресенья. Наведи на карточку человека, чтобы увидеть детали и мини-статистику.</p>
+      </div>
+    </section>
+
+    <section class="stats" id="stats"></section>
+
+    <div class="layout">
+      <aside class="panel">
+        <h2>Фильтры</h2>
+
+        <div class="filter-group">
+          <label for="searchInput">Поиск по имени</label>
+          <input id="searchInput" type="text" placeholder="Например: Kris" />
+        </div>
+
+        <div class="filter-group">
+          <label for="teamFilter">Команда</label>
+          <select id="teamFilter">
+            <option value="all">Все команды</option>
+            <option value="Team 1">Team 1</option>
+            <option value="Team 2">Team 2</option>
+            <option value="Team 3">Team 3</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="zoneFilter">Основная зона</label>
+          <select id="zoneFilter">
+            <option value="all">Все зоны</option>
+            <option value="Leadership">Leadership</option>
+            <option value="Tech">Tech</option>
+            <option value="Program">Program</option>
+            <option value="Support">Support</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Умения</label>
+          <div class="chips" id="skillChips"></div>
+        </div>
+
+        <button class="btn-reset" id="resetBtn">Сбросить фильтры</button>
+      </aside>
+
+      <main class="content">
+        <section class="content-section">
+          <h2>People</h2>
+          <div class="members-grid" id="membersGrid"></div>
+          <div class="empty" id="emptyState" style="display:none;">По этим фильтрам никого не найдено.</div>
+        </section>
+
+        <section class="content-section">
+          <h2>Примерное расписание на 3 воскресенья</h2>
+          <div class="schedule-grid" id="scheduleGrid"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+  
+  <script>
+var members = [
+  {
+    name: 'Sofiia',
+    team: 'Team 1',
+    mainZone: 'Leadership',
+    backupZone: 'Speaker / Support',
+    category: 'lead',
+    skills: ['Lead of the Day', 'Speaker', 'Coordination'],
+    canReplace: ['Katy', 'Elvira'],
+    monthServed: 3,
+    notes: 'Держит всю картину дня и координацию двух комнат.'
+  },
+  {
+    name: 'Katy',
+    team: 'Team 1',
+    mainZone: 'Leadership',
+    backupZone: 'Speaker / Prayer Box',
+    category: 'lead',
+    skills: ['Room Lead', 'Speaker', 'Prayer Box'],
+    canReplace: ['Sofiia'],
+    monthServed: 3,
+    notes: 'Middle school lead.'
+  },
+  {
+    name: 'Elvira',
+    team: 'Team 1',
+    mainZone: 'Leadership',
+    backupZone: 'Speaker / Prayer Box',
+    category: 'lead',
+    skills: ['Room Lead', 'Speaker', 'Prayer Box', 'Discussion'],
+    canReplace: ['Sofiia'],
+    monthServed: 3,
+    notes: 'High school lead.'
+  },
+  {
+    name: 'Kris',
+    team: 'Team 1',
+    mainZone: 'Tech',
+    backupZone: 'Tech Lead',
+    category: 'tech',
+    skills: ['Screen', 'Sound'],
+    canReplace: ['Zhenya', 'Veronica'],
+    monthServed: 3,
+    notes: 'Основное tech-ядро команды.'
+  },
+  {
+    name: 'Zhenya',
+    team: 'Team 1',
+    mainZone: 'Tech',
+    backupZone: 'Backup Tech Lead',
+    category: 'tech',
+    skills: ['Screen', 'Sound'],
+    canReplace: ['Kris', 'Veronica'],
+    monthServed: 3,
+    notes: 'Взаимозаменяем с Kris по основной технике.'
+  },
+  {
+    name: 'Sam',
+    team: 'Team 1',
+    mainZone: 'Tech',
+    backupZone: 'Setup Help',
+    category: 'tech',
+    skills: ['Lights'],
+    canReplace: [],
+    monthServed: 3,
+    notes: 'Единственный стабильный lights-человек в Team 1.'
+  },
+  {
+    name: 'Liana',
+    team: 'Team 1',
+    mainZone: 'Program',
+    backupZone: 'Program Lead',
+    category: 'program',
+    skills: ['Greeting', 'Game'],
+    canReplace: ['Darina', 'Ivanka'],
+    monthServed: 3,
+    notes: 'Сильна в opening и вовлечении.'
+  },
+  {
+    name: 'Veronica',
+    team: 'Team 1',
+    mainZone: 'Tech',
+    backupZone: 'Tech Backup',
+    category: 'tech',
+    skills: ['Screen', 'Sound'],
+    canReplace: ['Kris', 'Zhenya'],
+    monthServed: 3,
+    notes: 'Третий tech-человек, важна для устойчивости.'
+  },
+  {
+    name: 'Vika',
+    team: 'Team 1',
+    mainZone: 'Support',
+    backupZone: 'Welcome Support',
+    category: 'support',
+    skills: ['Order', 'Care', 'Support'],
+    canReplace: ['Misha'],
+    monthServed: 3,
+    notes: 'Держит порядок и заботу о подростках.'
+  },
+  {
+    name: 'Misha',
+    team: 'Team 1',
+    mainZone: 'Support',
+    backupZone: 'Setup Help',
+    category: 'support',
+    skills: ['Order', 'Transitions', 'Support', 'Setup'],
+    canReplace: ['Vika'],
+    monthServed: 3,
+    notes: 'Надежная поддержка комнаты и сетапа.'
+  },
+  {
+    name: 'Ivanka',
+    team: 'Team 1',
+    mainZone: 'Program',
+    backupZone: 'Pre-service / Game Support',
+    category: 'program',
+    skills: ['Welcome', 'Greeting', 'Pre-service Connect'],
+    canReplace: ['Darina', 'Liana'],
+    monthServed: 3,
+    notes: 'Сильна в warm welcome и новых людях.'
+  },
+  {
+    name: 'Darina',
+    team: 'Team 1',
+    mainZone: 'Program',
+    backupZone: 'Opening Lead',
+    category: 'program',
+    skills: ['Greeting', 'Prayer Box', 'Atmosphere'],
+    canReplace: ['Ivanka', 'Liana'],
+    monthServed: 3,
+    notes: 'Хорошо ведет opening и теплую атмосферу.'
+  }
+];
+
+var schedules = [
+  {
+    title: 'Sunday 1',
+    subtitle: 'Team 1 / 2 rooms',
+    general: [
+      'Lead of the day: Sofiia',
+      'Pre-service: Ivanka, Darina',
+      'Setup: Sofiia, Misha',
+      'Order before start: Vika'
+    ],
+    middle: [
+      'Room lead: Katy',
+      'Greeting: Darina',
+      'Prayer box: Katy',
+      'Speaker: Katy',
+      'Game/groups: Liana',
+      'Screen: Kris',
+      'Sound: Veronica',
+      'Lights: Sam',
+      'Support: Vika'
+    ],
+    high: [
+      'Room lead: Elvira',
+      'Greeting: Ivanka',
+      'Prayer box: Elvira',
+      'Speaker: Sofiia',
+      'Groups/discussion: Elvira',
+      'Screen: Zhenya',
+      'Sound: Kris',
+      'Lights: Base lights',
+      'Support: Misha'
+    ]
+  },
+  {
+    title: 'Sunday 2',
+    subtitle: 'Team 1 / 2 rooms',
+    general: [
+      'Lead of the day: Sofiia',
+      'Pre-service: Ivanka, Liana',
+      'Setup: Sofiia, Misha',
+      'Order before start: Vika'
+    ],
+    middle: [
+      'Room lead: Katy',
+      'Greeting: Ivanka',
+      'Prayer box: Darina',
+      'Speaker: Sofiia',
+      'Game/groups: Liana',
+      'Screen: Zhenya',
+      'Sound: Veronica',
+      'Lights: Sam',
+      'Support: Vika'
+    ],
+    high: [
+      'Room lead: Elvira',
+      'Greeting: Darina',
+      'Prayer box: Elvira',
+      'Speaker: Elvira',
+      'Groups/discussion: Elvira',
+      'Screen: Kris',
+      'Sound: Zhenya',
+      'Lights: Base lights',
+      'Support: Misha'
+    ]
+  },
+  {
+    title: 'Sunday 3',
+    subtitle: 'Team 1 / 2 rooms',
+    general: [
+      'Lead of the day: Sofiia',
+      'Pre-service: Ivanka, Darina',
+      'Setup: Sofiia, Misha',
+      'Order before start: Vika'
+    ],
+    middle: [
+      'Room lead: Katy',
+      'Greeting: Liana',
+      'Prayer box: Katy',
+      'Speaker: Katy',
+      'Game/groups: Ivanka',
+      'Screen: Kris',
+      'Sound: Zhenya',
+      'Lights: Sam',
+      'Support: Vika'
+    ],
+    high: [
+      'Room lead: Elvira',
+      'Greeting: Darina',
+      'Prayer box: Elvira',
+      'Speaker: Sofiia',
+      'Groups/discussion: Elvira',
+      'Screen: Veronica',
+      'Sound: Kris',
+      'Lights: Base lights',
+      'Support: Misha'
+    ]
+  }
+];
+
+var allSkills = [];
+members.forEach(function(member) {
+  member.skills.forEach(function(skill) {
+    if (allSkills.indexOf(skill) === -1) {
+      allSkills.push(skill);
+    }
+  });
+});
+allSkills.sort();
+
+var state = {
+  search: '',
+  team: 'all',
+  zone: 'all',
+  skill: 'all'
+};
+
+var membersGrid = document.getElementById('membersGrid');
+var emptyState = document.getElementById('emptyState');
+var stats = document.getElementById('stats');
+var scheduleGrid = document.getElementById('scheduleGrid');
+var searchInput = document.getElementById('searchInput');
+var teamFilter = document.getElementById('teamFilter');
+var zoneFilter = document.getElementById('zoneFilter');
+var skillChips = document.getElementById('skillChips');
+var resetBtn = document.getElementById('resetBtn');
+var tooltip = document.getElementById('tooltip');
+
+function createSkillChips() {
+  var allChip = document.createElement('button');
+  allChip.className = 'chip active';
+  allChip.textContent = 'Все';
+  allChip.setAttribute('data-skill', 'all');
+  skillChips.appendChild(allChip);
+
+  allSkills.forEach(function(skill) {
+    var chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.textContent = skill;
+    chip.setAttribute('data-skill', skill);
+    skillChips.appendChild(chip);
+  });
+
+  skillChips.addEventListener('click', function(e) {
+    var chip = e.target.closest('.chip');
+    if (!chip) return;
+
+    state.skill = chip.getAttribute('data-skill');
+
+    var chipList = skillChips.querySelectorAll('.chip');
+    Array.prototype.forEach.call(chipList, function(c) {
+      c.classList.remove('active');
+    });
+
+    chip.classList.add('active');
+    render();
+  });
+}
+
+function getCategoryLabel(zone) {
+  if (zone === 'Leadership') return 'Lead';
+  if (zone === 'Tech') return 'Tech';
+  if (zone === 'Program') return 'Program';
+  if (zone === 'Support') return 'Support';
+  return 'Other';
+}
+
+function filterMembers() {
+  return members.filter(function(member) {
+    var shownName = (member.displayName || member.name).toLowerCase();
+    var matchesSearch = shownName.indexOf(state.search.toLowerCase()) !== -1;
+    var matchesTeam = state.team === 'all' || member.team === state.team;
+    var matchesZone = state.zone === 'all' || member.mainZone === state.zone;
+    var matchesSkill = state.skill === 'all' || member.skills.indexOf(state.skill) !== -1;
+
+    return matchesSearch && matchesTeam && matchesZone && matchesSkill;
+  });
+}
+
+function renderStats(filtered) {
+  var total = filtered.length;
+  var techCount = filtered.filter(function(m) {
+    return m.mainZone === 'Tech';
+  }).length;
+  var leadCount = filtered.filter(function(m) {
+    return m.mainZone === 'Leadership';
+  }).length;
+  var programCount = filtered.filter(function(m) {
+    return m.mainZone === 'Program';
+  }).length;
+
+  stats.innerHTML =
+    '<div class=\"stat-card\">' +
+      '<div class=\"stat-label\">Людей показано</div>' +
+      '<div class=\"stat-value\">' + total + '</div>' +
+    '</div>' +
+    '<div class=\"stat-card\">' +
+      '<div class=\"stat-label\">Leadership</div>' +
+      '<div class=\"stat-value\">' + leadCount + '</div>' +
+    '</div>' +
+    '<div class=\"stat-card\">' +
+      '<div class=\"stat-label\">Tech</div>' +
+      '<div class=\"stat-value\">' + techCount + '</div>' +
+    '</div>' +
+    '<div class=\"stat-card\">' +
+      '<div class=\"stat-label\">Program</div>' +
+      '<div class=\"stat-value\">' + programCount + '</div>' +
+    '</div>';
+}
+
+function renderMembers(filtered) {
+  membersGrid.innerHTML = '';
+
+  if (!filtered.length) {
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  filtered.forEach(function(member) {
+    var card = document.createElement('article');
+    card.className = 'member-card';
+
+    var shownName = member.displayName || member.name;
+    var skillsHTML = '';
+    member.skills.forEach(function(skill) {
+      skillsHTML += '<span class=\"skill-tag\">' + skill + '</span>';
+    });
+
+    card.innerHTML =
+      '<div class=\"member-top\">' +
+        '<div>' +
+          '<div class=\"member-name\">' + shownName + '</div>' +
+          '<div class=\"member-team\">' + member.team + '</div>' +
+        '</div>' +
+        '<div class=\"role-badge ' + member.category + '\">' + getCategoryLabel(member.mainZone) + '</div>' +
+      '</div>' +
+      '<div class=\"member-row\"><div class=\"label\">Main</div><div>' + member.mainZone + '</div></div>' +
+      '<div class=\"member-row\"><div class=\"label\">Backup</div><div>' + member.backupZone + '</div></div>' +
+      '<div class=\"member-row\"><div class=\"label\">Served</div><div>' + member.monthServed + 'x this month</div></div>' +
+      '<div class=\"skills\">' + skillsHTML + '</div>';
+
+    card.addEventListener('mouseenter', function(e) {
+      showTooltip(e, member);
+    });
+    card.addEventListener('mousemove', moveTooltip);
+    card.addEventListener('mouseleave', hideTooltip);
+
+    membersGrid.appendChild(card);
+  });
+}
+
+function renderSchedules() {
+  scheduleGrid.innerHTML = '';
+
+  schedules.forEach(function(schedule) {
+    var card = document.createElement('article');
+    card.className = 'schedule-card';
+
+    function buildList(items) {
+      var html = '';
+      items.forEach(function(item) {
+        html += '<div>' + item + '</div>';
+      });
+      return html;
+    }
+
+    card.innerHTML =
+      '<h3>' + schedule.title + '</h3>' +
+      '<div class=\"schedule-subtitle\">' + schedule.subtitle + '</div>' +
+
+      '<div class=\"schedule-room\">' +
+        '<h4>General</h4>' +
+        '<div class=\"schedule-list\">' + buildList(schedule.general) + '</div>' +
+      '</div>' +
+
+      '<div class=\"schedule-room\">' +
+        '<h4>Middle School</h4>' +
+        '<div class=\"schedule-list\">' + buildList(schedule.middle) + '</div>' +
+      '</div>' +
+
+      '<div class=\"schedule-room\">' +
+        '<h4>High School</h4>' +
+        '<div class=\"schedule-list\">' + buildList(schedule.high) + '</div>' +
+      '</div>';
+
+    scheduleGrid.appendChild(card);
+  });
+}
+
+function showTooltip(event, member) {
+  var shownName = member.displayName || member.name;
+  var replaceText = member.canReplace.length ? member.canReplace.join(', ') : '—';
+
+  tooltip.innerHTML =
+    '<h3>' + shownName + '</h3>' +
+    '<div class=\"sub\">' + member.team + ' · ' + member.mainZone + '</div>' +
+    '<div class=\"line\"><strong>Backup:</strong> ' + member.backupZone + '</div>' +
+    '<div class=\"line\"><strong>Умения:</strong> ' + member.skills.join(', ') + '</div>' +
+    '<div class=\"line\"><strong>Может заменить:</strong> ' + replaceText + '</div>' +
+    '<div class=\"line\"><strong>Служил(а):</strong> ' + member.monthServed + ' раз(а) за месяц</div>' +
+    '<div class=\"line\"><strong>Note:</strong> ' + member.notes + '</div>';
+
+  tooltip.classList.add('visible');
+  moveTooltip(event);
+}
+
+function moveTooltip(event) {
+  var pad = 16;
+  var width = 290;
+  var x = Math.min(window.innerWidth - width - pad, event.clientX + 18);
+  var y = Math.min(window.innerHeight - 180, event.clientY + 18);
+
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+}
+
+function hideTooltip() {
+  tooltip.classList.remove('visible');
+}
+
+function render() {
+  var filtered = filterMembers();
+  renderStats(filtered);
+  renderMembers(filtered);
+  renderSchedules();
+}
+
+searchInput.addEventListener('input', function(e) {
+  state.search = e.target.value;
+  render();
+});
+
+teamFilter.addEventListener('change', function(e) {
+  state.team = e.target.value;
+  render();
+});
+
+zoneFilter.addEventListener('change', function(e) {
+  state.zone = e.target.value;
+  render();
+});
+
+resetBtn.addEventListener('click', function() {
+  state.search = '';
+  state.team = 'all';
+  state.zone = 'all';
+  state.skill = 'all';
+
+  searchInput.value = '';
+  teamFilter.value = 'all';
+  zoneFilter.value = 'all';
+
+  var chipList = skillChips.querySelectorAll('.chip');
+  Array.prototype.forEach.call(chipList, function(c) {
+    c.classList.remove('active');
+  });
+
+  var allChip = skillChips.querySelector('[data-skill=\"all\"]');
+  if (allChip) {
+    allChip.classList.add('active');
+  }
+
+  render();
+});
+
+createSkillChips();
+render();
+</script>
+ 
+ 
+ 
+</body>
+</html>
